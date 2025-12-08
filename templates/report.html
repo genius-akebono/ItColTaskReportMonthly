@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月次作業報告ツール - 月次レポート</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container report-container">
+        <header class="no-print">
+            <h1>月次作業報告ツール</h1>
+            <nav>
+                <a href="/">タスク登録</a>
+                <a href="/report" class="active">月次レポート</a>
+            </nav>
+        </header>
+
+        <div class="report-controls no-print">
+            <div class="period-selector">
+                <label for="year">年:</label>
+                <select id="year" onchange="loadReport()">
+                    {% for y in years %}
+                    <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}年</option>
+                    {% endfor %}
+                </select>
+
+                <label for="month">月:</label>
+                <select id="month" onchange="loadReport()">
+                    {% for m in months %}
+                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>{{ m }}月</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="group-selector">
+                <label>集計軸:</label>
+                <button id="btn-project" class="btn-group active" onclick="changeGroupBy('project')">プロジェクト別</button>
+                <button id="btn-category" class="btn-group" onclick="changeGroupBy('category')">カテゴリ別</button>
+            </div>
+
+            <button onclick="window.print()" class="btn-print">印刷</button>
+        </div>
+
+        <div class="report-header">
+            <h2 id="report-title">作業報告書</h2>
+            <p id="report-period"></p>
+        </div>
+
+        <div class="report-summary">
+            <div class="summary-item">
+                <span class="summary-label">総作業日数</span>
+                <span class="summary-value" id="total-days">-</span>
+                <span class="summary-unit">日</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">総作業時間</span>
+                <span class="summary-value" id="total-hours">-</span>
+                <span class="summary-unit">時間</span>
+            </div>
+        </div>
+
+        <div class="report-table-container">
+            <table class="report-table" id="report-table">
+                <thead>
+                    <tr>
+                        <th class="col-name">プロジェクト名</th>
+                        <th class="col-hours">作業時間</th>
+                        <th class="col-percentage">割合</th>
+                        <th class="col-bar">グラフ</th>
+                    </tr>
+                </thead>
+                <tbody id="report-tbody">
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 40px;">データを読み込み中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="report-footer no-print">
+            <p>月次作業報告ツール - ItCol</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='report.js') }}"></script>
+    <script>
+        // 初期データ読み込み
+        let currentGroupBy = 'project';
+        loadReport();
+    </script>
+</body>
+</html>
