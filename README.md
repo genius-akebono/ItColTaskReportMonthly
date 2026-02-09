@@ -7,15 +7,15 @@ IT業務における作業実績を日々記録し、月次で集計・報告す
 ### 現在の実装状況
 ✅ **完了済み**
 - PostgreSQL データベース接続
-- 基本的なタスク管理機能（登録・一覧・削除）
+- タスク管理機能（登録・一覧・削除）
 - Flask + SQLAlchemy による基本構造
+- **タイマー機能（作業時間の自動計測）** ← NEW!
+- **カテゴリ分類機能** ← NEW!
+- **月次集計機能（プロジェクト別、カテゴリ別）** ← NEW!
+- **レポート画面** ← NEW!
+- **A4印刷対応** ← NEW!
 
-❌ **未実装（これから開発する機能）**
-- タイマー機能（作業時間の自動計測）
-- カテゴリ分類機能
-- 月次集計機能（プロジェクト別、カテゴリ別）
-- レポート画面
-- A4印刷対応
+🎉 **全てのMUST機能が実装完了しました！**
 
 ### 開発体制
 - **対象者**: IT専門学生 6名
@@ -118,9 +118,14 @@ ItColTaskReportMonthly/
 │       ├── ui_task_entry.png       # （配置してください）
 │       └── ui_monthly_report.png   # （配置してください）
 ├── templates/
-│   └── index.html            # フロントエンド（現在は基本的なタスク一覧のみ）
+│   ├── index.html            # タスク登録画面
+│   └── report.html           # 月次レポート画面
 ├── static/
-│   └── style.css             # スタイルシート
+│   ├── style.css             # スタイルシート
+│   ├── timer.js              # タイマー機能
+│   └── report.js             # レポート機能
+├── instance/
+│   └── db.sqlite             # SQLiteデータベース（自動生成）
 ├── setup.sh                  # Linux/Mac セットアップスクリプト
 ├── setup_windows.ps1         # Windows セットアップスクリプト
 ├── setup_docker.sh           # Docker セットアップスクリプト
@@ -185,20 +190,37 @@ ItColTaskReportMonthly/
 ## 📝 開発ノート
 
 ### データベース
-現在のテーブル構成：
-- `Todo` テーブル（既存）: id, title
+✅ **実装済み**
 
-改修後のテーブル構成（外部設計書参照）：
-- `tasks` テーブル: id, task_name, category, memo, start_time, end_time, duration_seconds, created_date, created_at
+テーブル構成：
+- `tasks` テーブル
+  - id: INTEGER (主キー、自動採番)
+  - task_name: VARCHAR(100) (プロジェクト名)
+  - category: VARCHAR(50) (カテゴリ: 開発、会議、メール、調査、その他)
+  - memo: TEXT (メモ、任意)
+  - start_time: TIMESTAMP (作業開始時刻)
+  - end_time: TIMESTAMP (作業終了時刻)
+  - duration_seconds: INTEGER (作業時間、秒単位)
+  - created_date: DATE (タスク登録日)
+  - created_at: TIMESTAMP (レコード作成日時)
 
-### API エンドポイント（予定）
-- `GET /` - タスク登録画面
-- `POST /task/add` - タスク登録
-- `POST /task/start` - タイマー開始
-- `POST /task/stop` - タイマー停止
-- `POST /task/delete/<id>` - タスク削除
-- `GET /report` - 月次レポート画面
-- `GET /api/report/monthly` - 月次集計データ取得（JSON）
+### API エンドポイント
+✅ **実装済み**
+
+| エンドポイント | メソッド | 説明 |
+|--------------|---------|------|
+| `/` | GET | タスク登録画面（当日のタスク一覧含む） |
+| `/task/add` | POST | 新規タスク登録 |
+| `/task/start` | POST | タイマー開始（start_time記録） |
+| `/task/stop` | POST | タイマー停止（end_time, duration_seconds記録） |
+| `/task/delete/<id>` | POST | タスク削除 |
+| `/report` | GET | 月次レポート画面 |
+| `/api/report/monthly` | GET | 月次集計データ取得（JSON） |
+
+**月次集計APIのパラメータ:**
+- `year`: 集計年 (例: 2025)
+- `month`: 集計月 (例: 12)
+- `group_by`: 集計軸 (`project` または `category`)
 
 ## 📞 サポート
 

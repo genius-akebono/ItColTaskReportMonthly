@@ -1,31 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>Todo App</title>
-    <link rel="stylesheet" href="../static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月次作業報告ツール - タスク登録</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Todo App</h1>
+        <header>
+            <h1>月次作業報告ツール</h1>
+            <nav>
+                <a href="/" class="active">タスク登録</a>
+                <a href="/report">月次レポート</a>
+            </nav>
+        </header>
+
         {% if db_info %}
         <div class="db-info">
             <strong>🐘 Database:</strong> {{ db_info.type }} - {{ db_info.database }}@{{ db_info.host }} (User: {{ db_info.user }})
         </div>
         {% endif %}
-        <form method="POST" action="/add">
-            <input type="text" name="title" id="title" placeholder="Add Todo" required>
-            <button type="submit">Add</button>
-        </form>
-        <ul>
-            {% for todo in todo_list %}
-            <li>
-                {{ todo.title }}
-                <form method="POST" action="/delete/{{ todo.id }}">
-                    <button type="submit">Delete</button>
-                </form>
-            </li>
-            {% endfor %}
-        </ul>
+
+        <div class="date-info">
+            <h2>{{ today.strftime('%Y年%m月%d日') }}</h2>
+            {% set total_minutes = (total_hours * 60) | int %}
+            {% set th = total_minutes // 60 %}
+            {% set tm = total_minutes % 60 %}
+            <p class="total-hours">本日の作業時間: <strong>{{ "%d時間%02d分" % (th, tm) }}</strong></p>
+        </div>
+
+        <div class="task-form-container">
+            <h3>新規タスク登録</h3>
+            <form method="POST" action="/task/add" class="task-form">
+                <div class="form-group">
+                    <label for="task_name">プロジェクト名 <span class="required">*</span></label>
+                    <input type="text" id="task_name" name="task_name" maxlength="100" required placeholder="例: システム開発プロジェクト">
+                </div>
+
+                <div class="form-group">
+                    <label for="category">カテゴリ <span class="required">*</span></label>
+                    <select id="category" name="category" required>
+                        <option value="">選択してください</option>
+                        <option value="開発">開発</option>
+                        <option value="会議">会議</option>
+                        <option value="メール">メール</option>
+                        <option value="調査">調査</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="memo">メモ</label>
+                    <textarea id="memo" name="memo" maxlength="500" rows="3" placeholder="任意のメモを入力..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="created_date">作業日</label>
+                    <input type="date" id="created_date" name="created_date" value="{{ today }}">
+                </div>
+
+                <button type="submit" class="btn-primary">タスク登録</button>
+            </form>
+        </div>
+
+        <div class="task-list-container">
+            <h3>本日のタスク一覧</h3>
+            {% if task_list %}
+                <div class="task-list">
+                    {% for task in task_list %}
+                    <div class="task-item" data-task-id="{{ task.id }}">
+                        <div class="task-header">
+                            <h4>{{ task.task_name }}</h4>
+                            <span class="task-category category-{{ task.category }}">{{ task.category }}</span>
+                        </div>
+
+                        <div class="task-details">
+                            {% if task.memo %}
+                            <p class="task-memo">{{ task.memo }}</p>
+                            {% endif %}
+
+                            <div class="task-time">
+                                <span class="timer-display" id="timer-{{ task.id }}">
+                                    {% if task.start_time and not task.end_time %}
+                                        <span class="status-running">実行中...</span>
+                                    {% elif task.duration_seconds > 0 %}
+                                        {% set total = task.duration_seconds | int %}
+                                        {% set h = (total // 3600) %}
+                                        {% set m = (total % 3600) // 60 %}
+                                        {% set s = total % 60 %}
+                                        {{ "%02d:%02d:%02d" % (h, m, s) }}
+                                    {% else %}
+                                        00:00:00
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="task-actions">
+                            {% if not task.start_time %}
+                                <button class="btn-start" onclick="startTimer({{ task.id }})">START</button>
+                            {% elif task.start_time and not task.end_time %}
+                                <button class="btn-stop" onclick="stopTimer({{ task.id }})">STOP</button>
+                            {% endif %}
+
+                            <form method="POST" action="/task/delete/{{ task.id }}" style="display: inline;">
+                                <button type="submit" class="btn-delete" onclick="return confirm('このタスクを削除しますか？')">削除</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-tasks">本日のタスクはまだありません。</p>
+            {% endif %}
+        </div>
     </div>
+
+    <script src="{{ url_for('static', filename='timer.js') }}"></script>
 </body>
 </html>
